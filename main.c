@@ -29,7 +29,7 @@ int main(int argc, char** args)
             printf("Usage: %s [OPTIONS] [FILENAME]\n\n", appName);
             printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
 
-            printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D).\n");
+            printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
             printf("\t-v VARNAME\tDefault variable names are %s%s and %s%s. \n\t\t\tUse this option to change them to VARNAMEData and VARNAMESize.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize);
             printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
             printf("\t-h, --help\tPrint this help screen.\n");

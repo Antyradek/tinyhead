@@ -22,4 +22,11 @@ $ th -s -v kitty my_kitty_photo.png > kitty.h
 	
 Refer to 'th --help' for more info.
 
+TinyHead works also on empty files and generates empty array with size value of 0.
+
 Compile it with make. You can then move it to ~/bin and add to PATH.
+
+Program encodes bytes to ascii and bloats file roughtly 3 times.
+This depends of the file, as 0x00 takes one character and 0xff takes three.
+
+Compared to xxd is twice as effective (and a little faster).
