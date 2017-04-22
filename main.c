@@ -18,7 +18,7 @@ int main(int argc, char** args)
 	char* varName = DEFAULT_VARNAME;
 	char* appName = args[0];
 	char* varNameData = "Data";
-    char* varNameSize = "Size";
+    char* varNameSize = "DataSize";
 
     bool gaveFileName = false;
 
@@ -30,7 +30,7 @@ int main(int argc, char** args)
             printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
 
             printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
-            printf("\t-v VARNAME\tDefault variable names are %s%s and %s%s. \n\t\t\tUse this option to change them to VARNAMEData and VARNAMESize.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize);
+            printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const unsigned long %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
             printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
             printf("\t-h, --help\tPrint this help screen.\n");
             exit(0);
@@ -57,7 +57,7 @@ int main(int argc, char** args)
         else if(strcmp(args[i], "-s") == 0)
         {
             varNameData = "_data";
-            varNameSize = "_size";
+            varNameSize = "_data_size";
         }
         else
         {
@@ -111,18 +111,18 @@ int main(int argc, char** args)
         }
 
         puts("#pragma once");
-        printf("const unsigned long %s%s = %ld;\n", varName, varNameSize, fileSize);
+        printf("const unsigned long %s%s = %lu;\n", varName, varNameSize, fileSize);
         printf("const unsigned char %s%s[] = {", varName, varNameData);
 
         //TODO optimize to print in parts so that Linus doesn't kill me for priting one byte only
         long i = 0;
         for(i = 0; i < readBytes - 1; i++)
         {
-            printf("%d,", buffer[i]);
+            printf("%hhu,", buffer[i]);
         }
         if(i < readBytes)
         {
-            printf("%d", buffer[i]);
+            printf("%hhu", buffer[i]);
         }
         printf("};\n");
 
@@ -154,18 +154,18 @@ int main(int argc, char** args)
             {
                 for(i = 0; i < readBytes; i++)
                 {
-                    printf("%d,", buffer[i]);
+                    printf("%hhu,", buffer[i]);
                 }
             }
             else if(readBytes != BUFFER_SIZE && feof(stdin))
             {
                 for(i = 0; i < readBytes - 1; i++)
                 {
-                    printf("%d,", buffer[i]);
+                    printf("%hhu,", buffer[i]);
                 }
                 if(i < readBytes)
                 {
-                    printf("%d", buffer[i]);
+                    printf("%hhu", buffer[i]);
                 }
                 printf("};\n");
                 break;
@@ -178,7 +178,7 @@ int main(int argc, char** args)
         }
         free(buffer);
 
-        printf("const unsigned long %s%s = %ld;", varName, varNameSize, fileSize);
+        printf("const unsigned long %s%s = %lu;", varName, varNameSize, fileSize);
     }
 	return 0;
 }

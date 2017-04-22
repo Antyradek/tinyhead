@@ -9,16 +9,16 @@ Works like "xxd -i" but tries to create smaller file by omitting spaces and hex 
 
 Examples:
 $ th my_kitty_photo.png > kitty.h
-	Generates header file with variables fileData and fileSize.
+	Generates header file with variables fileData and fileDataSize.
 	
 $ th < cat my_kitty_photo.png > kitty.h
 	Reads data from STDIN.
 	
 $ th -v kitty my_kitty_photo.png > kitty.h
-	Generates header file with kittyData and kittySize.
+	Generates header file with kittyData and kittyDataSize.
 	
 $ th -s -v kitty my_kitty_photo.png > kitty.h
-	Generates header, but uses snake_case for veriables, that is kitty_data and kitty_size.
+	Generates header, but uses snake_case for veriables, that is kitty_data and kitty_data_size.
 	
 Refer to 'th --help' for more info.
 
