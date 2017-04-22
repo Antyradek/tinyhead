@@ -1,0 +1,25 @@
+ _____ _             _   _                _ 
+|_   _(_)_ __  _   _| | | | ___  __ _  __| |
+  | | | | '_ \| | | | |_| |/ _ \/ _` |/ _` |
+  | | | | | | | |_| |  _  |  __/ (_| | (_| |
+  |_| |_|_| |_|\__, |_| |_|\___|\__,_|\__,_|
+               |___/                        
+
+Works like "xxd -i" but tries to create smaller file by omitting spaces and hex digits.
+
+Examples:
+$ th my_kitty_photo.png > kitty.h
+	Generates header file with variables fileData and fileSize.
+	
+$ th < cat my_kitty_photo.png > kitty.h
+	Reads data from STDIN.
+	
+$ th -v kitty my_kitty_photo.png > kitty.h
+	Generates header file with kittyData and kittySize.
+	
+$ th -s -v kitty my_kitty_photo.png > kitty.h
+	Generates header, but uses snake_case for veriables, that is kitty_data and kitty_size.
+	
+Refer to 'th --help' for more info.
+
+Compile it with make. You can then move it to ~/bin and add to PATH.
