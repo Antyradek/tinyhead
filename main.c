@@ -30,7 +30,7 @@ int main(int argc, char** args)
             printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
 
             printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
-            printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const unsigned long %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
+            printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const size_t %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
             printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
             printf("\t-h, --help\tPrint this help screen.\n");
             exit(0);
@@ -111,7 +111,7 @@ int main(int argc, char** args)
         }
 
         puts("#pragma once");
-        printf("const unsigned long %s%s = %lu;\n", varName, varNameSize, fileSize);
+        printf("const size_t %s%s = %lu;\n", varName, varNameSize, fileSize);
         printf("const unsigned char %s%s[] = {", varName, varNameData);
 
         //TODO optimize to print in parts so that Linus doesn't kill me for priting one byte only
@@ -141,12 +141,23 @@ int main(int argc, char** args)
         printf("const unsigned char %s%s[] = {", varName, varNameData);
 
         char* buffer = malloc(sizeof(char) * BUFFER_SIZE);
-        //TODO check
+		if(buffer == NULL)
+		{
+			perror(appName);
+			retVal = EXIT_ERR_MEM;
+			goto pipeMallocErr;
+		}
 
         long fileSize = 0;
         while(true)
         {
             int readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, stdin);
+			if(ferror(stdin))
+			{
+				perror(appName)
+				retVal = EXIT_ERR_READ;
+				goto pipeFreadError:
+			}
 			fileSize += readBytes;
 			int i = 0;
 
@@ -170,15 +181,13 @@ int main(int argc, char** args)
                 printf("};\n");
                 break;
             }
-            else if(ferror(stdin))
-            {
-                perror(appName);
-                exit(EXIT_ERR_READ);
-            }
         }
+	
+	pipeFreadError:
         free(buffer);
-
-        printf("const unsigned long %s%s = %lu;", varName, varNameSize, fileSize);
+	pipeMallocErr:
+        printf("const size_t %s%s = %lu;", varName, varNameSize, fileSize);
+		return retVal;
     }
 	return 0;
 }
