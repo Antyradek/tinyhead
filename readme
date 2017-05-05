@@ -11,22 +11,23 @@ Examples:
 $ th my_kitty_photo.png > kitty.h
 	Generates header file with variables fileData and fileDataSize.
 	
-$ th < cat my_kitty_photo.png > kitty.h
+$ th < my_kitty_photo.png > kitty.h
+$ cat my_kitty_photo.png | th > kitty.h
 	Reads data from STDIN.
 	
 $ th -v kitty my_kitty_photo.png > kitty.h
 	Generates header file with kittyData and kittyDataSize.
 	
 $ th -s -v kitty my_kitty_photo.png > kitty.h
-	Generates header, but uses snake_case for veriables, that is kitty_data and kitty_data_size.
+	Generates header, but uses snake_case for variables, that is kitty_data and kitty_data_size.
 	
 Refer to 'th --help' for more info.
 
 TinyHead works also on empty files and generates empty array with size value of 0.
 
-Compile it with make. You can then move it to ~/bin and add to PATH.
+Compile it with make. You can then move it to your ~/bin and add to PATH.
 
-Program encodes bytes to ascii and bloats file roughtly 3 times.
-This depends of the file, as 0x00 takes one character and 0xff takes three.
+Program encodes bytes to ascii and bloats file size roughtly 3 times.
+This depends of the file, as 0x00 takes one character (0) and 0xff takes three (255).
 
-Compared to xxd is twice as effective (and a little faster).
+Compared to xxd, TinyHead is twice as effective (and a little faster).

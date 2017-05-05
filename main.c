@@ -73,6 +73,7 @@ int main(int argc, char** args)
     if(gaveFileName)
     {
         //Those are C exceptions with goto
+        //open file
         FILE* file = fopen(fileName, "rb");
         if(file == NULL)
         {
@@ -84,6 +85,7 @@ int main(int argc, char** args)
         //this function may return non-zero with empty files and ftell will still work correctly
         fseek(file, 0, SEEK_END);
 
+        //get file size
         const long fileSize = ftell(file);
         if(fileSize < 0)
         {
@@ -94,6 +96,7 @@ int main(int argc, char** args)
 
         rewind(file);
 
+        //allocate buffer
         char* buffer = malloc(sizeof(char) * fileSize);
         if(buffer == NULL)
         {
@@ -102,6 +105,7 @@ int main(int argc, char** args)
             goto mallocErr;
         }
 
+        //read file into memory
         const long readBytes = fread(buffer, sizeof(char), fileSize, file);
         if(ferror(file))
         {
@@ -110,22 +114,58 @@ int main(int argc, char** args)
             goto freadErr;
         }
 
+        //print header
         puts("#pragma once");
         printf("const size_t %s%s = %lu;\n", varName, varNameSize, fileSize);
         printf("const unsigned char %s%s[] = {", varName, varNameData);
 
-        //TODO optimize to print in parts so that Linus doesn't kill me for priting one byte only
+        //create buffer file, to output everything at once
+		FILE* bufferFile = tmpfile();
+		if(bufferFile == NULL)
+        {
+            perror(appName);
+            retVal = EXIT_ERR_MEM;
+            goto bufferFileErr;
+        }
+
+        //read buffer, print to buffer file
         long i = 0;
         for(i = 0; i < readBytes - 1; i++)
         {
-            printf("%hhu,", buffer[i]);
+            fprintf(bufferFile, "%hhu,", buffer[i]);
         }
         if(i < readBytes)
         {
-            printf("%hhu", buffer[i]);
+            fprintf(bufferFile,"%hhu", buffer[i]);
         }
-        printf("};\n");
+        fprintf(bufferFile, "};\n");
 
+        //print buffer file at once
+        const long tmpFileSize = ftell(bufferFile);
+        rewind(bufferFile);
+
+        char* bufferBuffer = malloc(sizeof(char) * tmpFileSize);
+        if(bufferBuffer == NULL)
+        {
+            perror(appName);
+            retVal = EXIT_ERR_MEM;
+            goto bufferBufferErr;
+        }
+
+        fread(bufferBuffer, sizeof(char), tmpFileSize, bufferFile);
+        if(ferror(bufferFile))
+        {
+            perror(appName);
+            retVal = EXIT_ERR_MEM;
+            goto bufferBufferFileErr;
+        }
+        fputs(bufferBuffer, stdout);
+
+    bufferBufferFileErr:
+    bufferBufferErr:
+        free(bufferBuffer);
+    bufferFileErr:
+        fclose(bufferFile);
     freadErr:
         free(buffer);
     mallocErr:
@@ -133,7 +173,6 @@ int main(int argc, char** args)
         fclose(file);
     fopenErr:
         return retVal;
-
     }
     else
     {
@@ -154,9 +193,9 @@ int main(int argc, char** args)
             int readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, stdin);
 			if(ferror(stdin))
 			{
-				perror(appName)
+				perror(appName);
 				retVal = EXIT_ERR_READ;
-				goto pipeFreadError:
+				goto pipeFreadError;
 			}
 			fileSize += readBytes;
 			int i = 0;
@@ -182,11 +221,11 @@ int main(int argc, char** args)
                 break;
             }
         }
-	
+        printf("const size_t %s%s = %lu;\n", varName, varNameSize, fileSize);
+
 	pipeFreadError:
         free(buffer);
 	pipeMallocErr:
-        printf("const size_t %s%s = %lu;", varName, varNameSize, fileSize);
 		return retVal;
     }
 	return 0;
