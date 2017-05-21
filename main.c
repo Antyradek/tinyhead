@@ -11,14 +11,16 @@
 
 #define DEFAULT_VARNAME "file"
 
+typedef unsigned char byte;
+
 int main(int argc, char** args)
 {
 	//read arguments
 	char* fileName;
-	char* varName = DEFAULT_VARNAME;
-	char* appName = args[0];
-	char* varNameData = "Data";
-    char* varNameSize = "DataSize";
+	const char* varName = DEFAULT_VARNAME;
+	const char* appName = args[0];
+	const char* varNameData = "Data";
+    const char* varNameSize = "DataSize";
 
     bool gaveFileName = false;
 
@@ -44,7 +46,7 @@ int main(int argc, char** args)
                 exit(EXIT_ERR_ARGS);
             }
             varName = args[i];
-            int varNameLen = strlen(varName);
+            const int varNameLen = strlen(varName);
             for(int x = 0; x < varNameLen; x++)
             {
                 if(!isalnum(varName[x]) && varName[x] != '_')
@@ -97,7 +99,7 @@ int main(int argc, char** args)
         rewind(file);
 
         //allocate buffer
-        char* buffer = malloc(sizeof(char) * fileSize);
+        byte* buffer = malloc(sizeof(byte) * fileSize);
         if(buffer == NULL)
         {
             perror(appName);
@@ -106,7 +108,7 @@ int main(int argc, char** args)
         }
 
         //read file into memory
-        const long readBytes = fread(buffer, sizeof(char), fileSize, file);
+        const size_t readBytes = fread(buffer, sizeof(byte), fileSize, file);
         if(ferror(file))
         {
             perror(appName);
@@ -129,7 +131,7 @@ int main(int argc, char** args)
         }
 
         //read buffer, print to buffer file
-        long i = 0;
+        size_t i = 0;
         for(i = 0; i < readBytes - 1; i++)
         {
             fprintf(bufferFile, "%hhu,", buffer[i]);
@@ -179,7 +181,7 @@ int main(int argc, char** args)
         puts("#pragma once");
         printf("const unsigned char %s%s[] = {", varName, varNameData);
 
-        char* buffer = malloc(sizeof(char) * BUFFER_SIZE);
+        byte* buffer = malloc(sizeof(byte) * BUFFER_SIZE);
 		if(buffer == NULL)
 		{
 			perror(appName);
@@ -187,7 +189,7 @@ int main(int argc, char** args)
 			goto pipeMallocErr;
 		}
 
-        long fileSize = 0;
+        size_t fileSize = 0;
         while(true)
         {
             int readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, stdin);
