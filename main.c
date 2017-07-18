@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <unistd.h>
 #define BUFFER_SIZE 1024
 
 #define EXIT_ERR_ARGS 1
@@ -19,56 +20,57 @@ int main(int argc, char** args)
 	char* fileName;
 	const char* varName = DEFAULT_VARNAME;
 	const char* appName = args[0];
-	const char* varNameData = "Data";
-    const char* varNameSize = "DataSize";
+	char* varNameData = "Data";
+    char* varNameSize = "DataSize";
 
     bool gaveFileName = false;
-
-	for(int i = 1; i < argc; i++)
+	
+	//read arguments
+	int currOption = -1;
+	while((currOption = getopt(argc, args, "v:sf:h")) != -1)
 	{
-		if(strcmp(args[i], "--help") == 0 || strcmp(args[i], "-h") == 0)
-        {
-            printf("Usage: %s [OPTIONS] [FILENAME]\n\n", appName);
-            printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
-
-            printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
-            printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const size_t %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
-            printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
-            printf("\t-h, --help\tPrint this help screen.\n");
-            exit(0);
-        }
-        else if(strcmp(args[i], "-v") == 0)
-        {
-            i++;
-            if(i >= argc)
-            {
-                fprintf(stderr, "Missing value after '-v'\n");
-                exit(EXIT_ERR_ARGS);
-            }
-            varName = args[i];
-            const int varNameLen = strlen(varName);
-            for(int x = 0; x < varNameLen; x++)
-            {
-                if(!isalnum(varName[x]) && varName[x] != '_')
-                {
-                    fprintf(stderr, "Forbidden characters in variable name.\n");
-                    exit(EXIT_ERR_ARGS);
-                }
-            }
-        }
-        else if(strcmp(args[i], "-s") == 0)
-        {
-            varNameData = "_data";
-            varNameSize = "_data_size";
-        }
-        else
-        {
-            //read fileName
-            fileName = args[i];
-            gaveFileName = true;
-        }
+		switch(currOption)
+		{
+			case 'v':
+				//optarg is extern
+				varName = optarg;
+				int len = strlen(varName);
+				for(int i = 0; i < len; i++)
+				{
+					if(!isalnum(varName[i]) && varName[i] != '_')
+					{
+						fprintf(stderr, "Forbidden characters in variable name.\n");
+						exit(EXIT_ERR_ARGS);
+					}
+				}
+				break;
+				
+			case 's':
+				varNameData = "_data";
+				varNameSize = "_data_size";
+				break;
+				
+			case 'f':
+				fileName = optarg; 
+				gaveFileName = true;
+				break;
+				
+			case '?':
+			case 'h':
+				printf("Usage: %s [OPTIONS]\n\n", appName);
+				printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
+				
+				printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
+				printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const size_t %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
+				printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
+				printf("\t-f FILENAME\tFile to read contents from, if not given, reads from STDIN.\n");
+				printf("\t-h, --help\tPrint this help screen.\n");
+				exit(0);
+				break;
+		}
 	}
 
+	
 
     int retVal = 0;
 
