@@ -3,82 +3,95 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <unistd.h>
+#include <popt.h>
+#define VERSION "1.2.0"
+
 #define BUFFER_SIZE 1024
 
-#define EXIT_ERR_ARGS 1
-#define EXIT_ERR_READ 2
-#define EXIT_ERR_MEM 2
+#define EXIT_ERR_ARGS -1
+#define EXIT_ERR_READ -2
+#define EXIT_ERR_MEM -3
 
 #define DEFAULT_VARNAME "file"
 
 typedef unsigned char byte;
 
-int main(int argc, char** args)
+void printUsage(const char* appName, const char* varNameData, const char* varNameSize)
 {
-	//read arguments
-	char* fileName;
-	const char* varName = DEFAULT_VARNAME;
-	const char* appName = args[0];
+	printf("Usage: %s [OPTIONS]\n\n", appName);
+	printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
+	
+	printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
+	printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const size_t %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
+	printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
+	printf("\t-f FILENAME\tFile to read contents from, if not given, reads from STDIN.\n");
+	printf("\t-h, --help\tPrint this help screen.\n");
+}
+
+int main(int argc, char** argv)
+{
+	//execution context
+	char* filename = NULL;
+	char* varName = DEFAULT_VARNAME;
+	const char* appName = argv[0];
 	char* varNameData = "Data";
     char* varNameSize = "DataSize";
-
-    bool gaveFileName = false;
+	int useSnakeCase = 0;
+	int printVersion = 0;
 	
-	//read arguments
-	int currOption = -1;
-	while((currOption = getopt(argc, args, "v:sf:h")) != -1)
+	//popt arguments
+	struct poptOption optionsArray[] =
 	{
-		switch(currOption)
+		{"variable", 	'v', 	POPT_ARG_STRING, 	&varName, 		0, 	"String to use as genarated variable name", 	"varname"},
+		{"filename", 	'f', 	POPT_ARG_STRING, 	&filename, 		0, 	"File to read contents from", 					"filename"},
+		{"snakecase", 	's', 	POPT_ARG_NONE, 		&useSnakeCase, 	0, 	"Use snake_case", 								NULL},
+		POPT_AUTOHELP
+		{"version",		'v',	POPT_ARG_NONE,		&printVersion,	0,	"Print version and exit",						NULL},
+		POPT_TABLEEND
+	};
+	
+	//initialise popt context
+	poptContext optCon = poptGetContext(NULL, argc, (const char**) argv, optionsArray, 0);
+	
+	//read options (all are parsed via arg in optionsArray)
+	if(poptGetNextOpt(optCon) != -1)
+	{
+		poptPrintHelp(optCon, stderr, 0);
+		exit(EXIT_ERR_ARGS);
+	}
+	
+	//in case of version, print it and exit
+	if(printVersion)
+	{
+		fprintf(stderr, "%s %s by Radosław Świątkiewicz\n", appName, VERSION);
+		exit(0);
+	}
+	
+	//check if varname is correct
+	int len = strlen(varName);
+	for(int i = 0; i < len; i++)
+	{
+		if(!isalnum(varName[i]) && varName[i] != '_')
 		{
-			case 'v':
-				//optarg is extern
-				varName = optarg;
-				int len = strlen(varName);
-				for(int i = 0; i < len; i++)
-				{
-					if(!isalnum(varName[i]) && varName[i] != '_')
-					{
-						fprintf(stderr, "Forbidden characters in variable name.\n");
-						exit(EXIT_ERR_ARGS);
-					}
-				}
-				break;
-				
-			case 's':
-				varNameData = "_data";
-				varNameSize = "_data_size";
-				break;
-				
-			case 'f':
-				fileName = optarg; 
-				gaveFileName = true;
-				break;
-				
-			case '?':
-			case 'h':
-				printf("Usage: %s [OPTIONS]\n\n", appName);
-				printf("Encodes given data as array of bytes in C/C++ header file, which can be included into source code and will be put into data memory fragment on execution. Header includes two variables with data pointer and size.\n\n");
-				
-				printf("Program reads FILENAME file and prints header to STDOUT. \nIf no FILENAME is given, reads from STDIN until EOF (^D). File can be empty.\n");
-				printf("\t-v VARNAME\tDefault variable names are const unsigned char %s%s[] and const size_t %s%s. \n\t\t\tUse this option to change them to VARNAME%s[] and VARNAME%s.\n", DEFAULT_VARNAME, varNameData, DEFAULT_VARNAME, varNameSize, varNameData, varNameSize);
-				printf("\t-s\t\tUse snake case (my_amazing_file_data) instead of camel case (myAmazingFileData).\n");
-				printf("\t-f FILENAME\tFile to read contents from, if not given, reads from STDIN.\n");
-				printf("\t-h, --help\tPrint this help screen.\n");
-				exit(0);
-				break;
+			fprintf(stderr, "Forbidden characters in variable name.\n");
+			exit(EXIT_ERR_ARGS);
 		}
 	}
-
 	
-
+	//change suffix if snake case is used
+	if(useSnakeCase)
+	{
+		varNameData = "_data";
+		varNameSize = "_data_size";
+	}
+	
     int retVal = 0;
 
-    if(gaveFileName)
+    if(filename != NULL)
     {
         //Those are C exceptions with goto
         //open file
-        FILE* file = fopen(fileName, "rb");
+        FILE* file = fopen(filename, "rb");
         if(file == NULL)
         {
             perror(appName);
@@ -131,17 +144,20 @@ int main(int argc, char** args)
             retVal = EXIT_ERR_MEM;
             goto bufferFileErr;
         }
-
+        
         //read buffer, print to buffer file
         size_t i = 0;
-        for(i = 0; i < readBytes - 1; i++)
-        {
-            fprintf(bufferFile, "%hhu,", buffer[i]);
-        }
-        if(i < readBytes)
-        {
-            fprintf(bufferFile,"%hhu", buffer[i]);
-        }
+		if(readBytes > 0)
+		{
+			for(i = 0; i < readBytes - 1; i++)
+			{
+				fprintf(bufferFile, "%hhu,", buffer[i]);
+			}
+			if(i < readBytes)
+			{
+				fprintf(bufferFile,"%hhu", buffer[i]);
+			}
+		}
         fprintf(bufferFile, "};\n");
 
         //print buffer file at once
@@ -176,6 +192,7 @@ int main(int argc, char** args)
     ftellErr:
         fclose(file);
     fopenErr:
+		poptFreeContext(optCon);
         return retVal;
     }
     else
@@ -230,7 +247,10 @@ int main(int argc, char** args)
 	pipeFreadError:
         free(buffer);
 	pipeMallocErr:
+		poptFreeContext(optCon);
 		return retVal;
     }
+    //execution should never reach here
+    poptFreeContext(optCon);
 	return 0;
 }

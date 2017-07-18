@@ -5,25 +5,25 @@
   |_| |_|_| |_|\__, |_| |_|\___|\__,_|\__,_|
                |___/                        
 
+Embed specified file in header to be included in compiled executable.
 Works like "xxd -i" but tries to create smaller file by omitting spaces and hex digits.
+Consult manual "man ./manual".
 
 Examples:
-$ th my_kitty_photo.png > kitty.h
+$ th -f my_kitty_photo.png > kitty.h
 	Generates header file with variables fileData and fileDataSize.
 	
 $ th < my_kitty_photo.png > kitty.h
 $ cat my_kitty_photo.png | th > kitty.h
 	Reads data from STDIN.
 	
-$ th -v kitty my_kitty_photo.png > kitty.h
+$ th -v kitty -f my_kitty_photo.png > kitty.h
 	Generates header file with kittyData and kittyDataSize.
 	
-$ th -s -v kitty my_kitty_photo.png > kitty.h
+$ th -s -v kitty -f my_kitty_photo.png > kitty.h
 	Generates header, but uses snake_case for variables, that is kitty_data and kitty_data_size.
 	
-Refer to 'th --help' for more info.
-
-TinyHead works also on empty files and generates empty array with size value of 0.
+Refer to manual and "th --help" for more info.
 
 Compile it with make. You can then move it to your ~/bin and add to PATH.
 
