@@ -17,7 +17,7 @@ clean:
 .PHONY: install
 install: all
 	#Install executable
-	install -D $(EXE) $(DESTDIR)/bin/$(EXE)
+	install -D $(EXE) $(DESTDIR)/usr/bin/$(EXE)
 	#Compress manual
 	gzip -fk9 $(MAN)
 	#Install manual
@@ -26,6 +26,6 @@ install: all
 .PHONY: unistall
 unistall:
 	#Remove executable
-	rm -f $(DESTDIR)/bin/$(EXE)
+	rm -f $(DESTDIR)/usr/bin/$(EXE)
 	#Remove manual
 	rm -f $(DESTDIR)/usr/share/man/man1/$(MAN).gz
