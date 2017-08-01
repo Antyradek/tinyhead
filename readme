@@ -23,7 +23,10 @@ $ th -v kitty -f my_kitty_photo.png > kitty.h
 $ th -s -v kitty -f my_kitty_photo.png > kitty.h
 	Generates header, but uses snake_case for variables, that is kitty_data and kitty_data_size.
 	
-Refer to manual and "th --help" for more info.
+$ th -f my_kitty_photo.png -D 'Kitty data.' -S 'Kitty size.'
+	Generate header and documentation commands for data and size.
+	
+Refer to manual and "th --help" for more info and more examples.
 
 Compile it with make. You can then move it to your ~/bin and add to PATH.
 
@@ -31,3 +34,5 @@ Program encodes bytes to ascii and bloats file size roughtly 3 times.
 This depends of the file, as 0x00 takes one character (0) and 0xff takes three (255).
 
 Compared to xxd, TinyHead is twice as effective (and a little faster).
+
+This program is uploaded to AUR (https://aur.archlinux.org/packages/th/).

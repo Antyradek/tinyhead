@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <popt.h>
-#define VERSION "1.2.0"
+#define VERSION "1.3.0"
 
 #define BUFFER_SIZE 1024
 
@@ -14,7 +14,26 @@
 
 #define DEFAULT_VARNAME "file"
 
+#define VAR_SIZE_TYPE "const size_t"
+#define VAR_DATA_TYPE "const unsigned char"
+
 typedef unsigned char byte;
+
+///Print file headers such as include guards and other header includes
+void printHeaders(const int usecplusplus)
+{
+	puts("#pragma once");
+	printf("#include <%s>\n", usecplusplus ? "cstddef" : "stddef.h");
+}
+
+///Print comment in given style
+void printComment(const int javadocStyle, const char* value)
+{
+	if(value != NULL)
+	{
+		printf("%s %s %s\n", javadocStyle ? "/**" : "///", value, javadocStyle ? "*/" : "");
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -24,17 +43,25 @@ int main(int argc, char** argv)
 	const char* appName = argv[0];
 	char* varNameData = "Data";
 	char* varNameSize = "DataSize";
+	char* dataComment = NULL;
+	char* sizeComment = NULL;
+	int useCPP = 0;
+	int useJavadoc = 0;
 	int useSnakeCase = 0;
 	int printVersion = 0;
 	
 	//popt arguments
 	struct poptOption optionsArray[] =
 	{
-		{"variable", 	'v', 	POPT_ARG_STRING, 	&varName, 		0, 	"String to use as genarated variable name", 	"varname"},
-		{"filename", 	'f', 	POPT_ARG_STRING, 	&filename, 		0, 	"File to read contents from", 					"filename"},
-		{"snakecase", 	's', 	POPT_ARG_NONE, 		&useSnakeCase, 	0, 	"Use snake_case", 								NULL},
+		{"variable", 	'v', 	POPT_ARG_STRING, 	&varName, 		0, 	"String to use as genarated variable name", 			"VARNAME"},
+		{"filename", 	'f', 	POPT_ARG_STRING, 	&filename, 		0, 	"File to read contents from", 							"FILENAME"},
+		{"snakecase", 	's', 	POPT_ARG_NONE, 		&useSnakeCase, 	0, 	"Use snake_case, instead of camelCase", 				NULL},
+		{"cplusplus",	'p',	POPT_ARG_NONE,		&useCPP,		0,	"Use C++ header, instead of C one",						NULL},
+		{"data-comment",'D',	POPT_ARG_STRING,	&dataComment,	0,	"String to use as a comment above data array",			"DATACOMMENT"},
+		{"size-comment",'S',	POPT_ARG_STRING,	&sizeComment, 	0,	"String to use as a comment above size variable", 		"SIZECOMMENT"},
+		{"use-javadoc",	'J',	POPT_ARG_NONE,		&useJavadoc,	0,	"Use javadoc-style comments ('/**'), instead of C# ('///')", NULL},
 		POPT_AUTOHELP
-		{"version",		'v',	POPT_ARG_NONE,		&printVersion,	0,	"Print version and exit",						NULL},
+		{"version",		'\0',	POPT_ARG_NONE,		&printVersion,	0,	"Print version and exit",						NULL},
 		POPT_TABLEEND
 	};
 	
@@ -120,9 +147,11 @@ int main(int argc, char** argv)
 		}
 		
 		//print header
-		puts("#pragma once");
-		printf("const size_t %s%s = %lu;\n", varName, varNameSize, fileSize);
-		printf("const unsigned char %s%s[] = {", varName, varNameData);
+		printHeaders(useCPP);
+		printComment(useJavadoc, sizeComment);
+		printf(VAR_SIZE_TYPE " %s%s = %lu;\n", varName, varNameSize, fileSize);
+		printComment(useJavadoc, dataComment);
+		printf(VAR_DATA_TYPE " %s%s[] = {", varName, varNameData);
 		
 		//create buffer file, to output everything at once
 		FILE* bufferFile = tmpfile();
@@ -185,8 +214,9 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		puts("#pragma once");
-		printf("const unsigned char %s%s[] = {", varName, varNameData);
+		printHeaders(useCPP);
+		printComment(useJavadoc, dataComment);
+		printf(VAR_DATA_TYPE " %s%s[] = {", varName, varNameData);
 		
 		byte* buffer = malloc(sizeof(byte) * BUFFER_SIZE);
 		if(buffer == NULL)
@@ -230,7 +260,8 @@ int main(int argc, char** argv)
 				break;
 			}
 		}
-		printf("const size_t %s%s = %lu;\n", varName, varNameSize, fileSize);
+		printComment(useJavadoc, sizeComment);
+		printf(VAR_SIZE_TYPE " %s%s = %lu;\n", varName, varNameSize, fileSize);
 		
 	pipeFreadError:
 		free(buffer);

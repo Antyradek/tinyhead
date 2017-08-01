@@ -8,7 +8,7 @@ $(EXE): main.o
 	$(CC) -o $(EXE) $< -lpopt
 
 main.o: main.c
-	$(CC) -o $@ -Wall -O3 -c $<
+	$(CC) -o $@ -Wall -O3 -c -DNDEBUG $<
 
 .PHONY: clean
 clean:
